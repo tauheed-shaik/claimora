@@ -217,15 +217,10 @@ export default function Dashboard() {
         </AnimatePresence>
 
         {deployments.length > 0 ? (
-          <motion.div 
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-            className="grid gap-6 md:grid-cols-2 lg:grid-cols-3"
-          >
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {deployments.map((deployment) => (
-              <motion.div key={deployment.id} variants={itemVariants}>
-                <Link to={`/deployment/${deployment.id}`} className="block h-full">
+              <div key={deployment._id || deployment.id}>
+                <Link to={`/deployment/${deployment._id || deployment.id}`} className="block h-full">
                   <Card className="h-full group hover:border-amber-300 transition-colors">
                     <CardHeader className="pb-4">
                       <div className="flex items-start justify-between gap-4">
@@ -249,9 +244,9 @@ export default function Dashboard() {
                     </CardContent>
                   </Card>
                 </Link>
-              </motion.div>
+              </div>
             ))}
-          </motion.div>
+          </div>
         ) : (
           !isCreating && (
             <motion.div 
