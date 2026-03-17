@@ -81,7 +81,7 @@ export const generateExcel = async (deployment: Deployment, expenses: Expense[])
   link.click();
 };
 
-export const generatePDF = (deployment: Deployment, expenses: Expense[]) => {
+export const generatePDF = async (deployment: Deployment, expenses: Expense[]) => {
   const doc = new jsPDF();
   
   doc.setFontSize(18);
@@ -96,7 +96,8 @@ export const generatePDF = (deployment: Deployment, expenses: Expense[]) => {
   
   const sortedExpenses = [...expenses].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
-  sortedExpenses.forEach((exp, index) => {
+  for (let index = 0; index < sortedExpenses.length; index++) {
+    const exp = sortedExpenses[index];
     if (yOffset > 250) {
       doc.addPage();
       yOffset = 20;
@@ -109,8 +110,22 @@ export const generatePDF = (deployment: Deployment, expenses: Expense[]) => {
 
     if (exp.receiptImage) {
       try {
+        let imageData = exp.receiptImage;
+        
+        // If it's a remote URL (like Cloudinary), fetch it and convert to base64
+        if (imageData.startsWith('http')) {
+          const response = await fetch(imageData);
+          const blob = await response.blob();
+          imageData = await new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result as string);
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+          });
+        }
+
         // Add image (assuming JPEG base64)
-        doc.addImage(exp.receiptImage, 'JPEG', 14, yOffset + 10, 100, 100 * 0.75); // Fixed aspect ratio approx
+        doc.addImage(imageData, 'JPEG', 14, yOffset + 10, 100, 100 * 0.75); // Fixed aspect ratio approx
         yOffset += 95;
       } catch (e) {
         console.error("Failed to add image to PDF", e);
@@ -121,7 +136,7 @@ export const generatePDF = (deployment: Deployment, expenses: Expense[]) => {
       doc.text("No receipt image provided.", 14, yOffset + 15);
       yOffset += 25;
     }
-  });
+  }
 
   doc.save(`Receipts_${deployment.projectName.replace(/\s+/g, '_')}.pdf`);
 };

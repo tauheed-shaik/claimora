@@ -5,8 +5,16 @@ import dotenv from 'dotenv';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import path from 'path';
+import { v2 as cloudinary } from 'cloudinary';
 
 dotenv.config();
+
+// Configure Cloudinary
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
 const app = express();
 const PORT = process.env.PORT ? parseInt(process.env.PORT) : 3000;
@@ -182,10 +190,26 @@ app.get('/api/expenses/:deploymentId', authenticateToken, async (req: any, res: 
 
 app.post('/api/expenses', authenticateToken, async (req: any, res: any) => {
   try {
-    const expense = new Expense({ ...req.body, userId: req.user.id });
+    let receiptImageUrl = req.body.receiptImage;
+
+    // If the receipt image is a base64 string, upload it to Cloudinary
+    if (receiptImageUrl && receiptImageUrl.startsWith('data:image')) {
+      try {
+        const uploadResponse = await cloudinary.uploader.upload(receiptImageUrl, {
+          folder: 'claimora_receipts',
+        });
+        receiptImageUrl = uploadResponse.secure_url;
+      } catch (uploadError) {
+        console.error("Cloudinary upload error:", uploadError);
+        return res.status(500).json({ error: 'Failed to upload image to Cloudinary' });
+      }
+    }
+
+    const expense = new Expense({ ...req.body, receiptImage: receiptImageUrl, userId: req.user.id });
     await expense.save();
     res.json({ id: expense._id, ...expense.toObject() });
   } catch (error) {
+    console.error("Error creating expense:", error);
     res.status(500).json({ error: 'Failed to create expense' });
   }
 });

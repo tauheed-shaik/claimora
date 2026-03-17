@@ -223,7 +223,7 @@ export default function DeploymentDetails() {
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Button variant="outline" onClick={() => { generateExcel(deployment, expenses); generatePDF(deployment, expenses); }} className="bg-white border-stone-200 text-stone-700 hover:bg-stone-50 hover:text-stone-900">
+            <Button variant="outline" onClick={async () => { await generateExcel(deployment, expenses); await generatePDF(deployment, expenses); }} className="bg-white border-stone-200 text-stone-700 hover:bg-stone-50 hover:text-stone-900">
               <FileSpreadsheet className="mr-2 h-4 w-4 text-amber-500" />
               Download Pack (Excel + PDF)
             </Button>
