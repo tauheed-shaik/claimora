@@ -6,6 +6,8 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import path from 'path';
 import { v2 as cloudinary } from 'cloudinary';
+import swaggerUi from 'swagger-ui-express';
+import swaggerJsdoc from 'swagger-jsdoc';
 
 dotenv.config();
 
@@ -25,6 +27,37 @@ const JWT_SECRET = process.env.JWT_SECRET || "3742b190374a094334a85168029e94e9c7
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
+
+// --- Swagger Configuration ---
+const swaggerOptions = {
+  definition: {
+    openapi: '3.0.0',
+    info: {
+      title: 'Claimora API',
+      version: '1.0.0',
+      description: 'API documentation for Claimora expense tracking app',
+    },
+    servers: [
+      {
+        url: process.env.APP_URL || `http://localhost:${PORT}`,
+      },
+    ],
+    components: {
+      securitySchemes: {
+        bearerAuth: {
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'JWT',
+        },
+      },
+    },
+    security: [{ bearerAuth: [] }],
+  },
+  apis: ['./server.ts'], // Path to the API docs
+};
+
+const swaggerSpec = swaggerJsdoc(swaggerOptions);
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // --- MongoDB Connection ---
 mongoose.connect(MONGODB_URI)
@@ -124,8 +157,9 @@ app.get('/api/deployments', authenticateToken, async (req: any, res: any) => {
   try {
     const deployments = await Deployment.find({ userId: req.user.id }).sort({ createdAt: -1 });
     res.json(deployments.map(d => ({ id: d._id, ...d.toObject() })));
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch deployments' });
+  } catch (error: any) {
+    console.error("Error fetching deployments:", error);
+    res.status(500).json({ error: 'Failed to fetch deployments', details: error.message });
   }
 });
 
@@ -144,8 +178,9 @@ app.post('/api/deployments', authenticateToken, async (req: any, res: any) => {
     const deployment = new Deployment({ ...req.body, userId: req.user.id });
     await deployment.save();
     res.json({ id: deployment._id, ...deployment.toObject() });
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to create deployment' });
+  } catch (error: any) {
+    console.error("Error creating deployment:", error);
+    res.status(500).json({ error: 'Failed to create deployment', details: error.message });
   }
 });
 

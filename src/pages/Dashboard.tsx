@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { Link, Navigate } from 'react-router-dom';
+import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
 import { Input } from '../components/ui/input';
@@ -10,6 +10,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 export default function Dashboard() {
   const { user, loading, logout } = useAuth();
+  const navigate = useNavigate();
   const [deployments, setDeployments] = useState<any[]>([]);
   const [isCreating, setIsCreating] = useState(false);
   const [newDeployment, setNewDeployment] = useState({
@@ -60,9 +61,11 @@ export default function Dashboard() {
       });
       
       if (res.ok) {
+        const data = await res.json();
         await fetchDeployments();
         setIsCreating(false);
         setNewDeployment({ projectName: '', location: '', startDate: '', endDate: '' });
+        navigate(`/deployment/${data.id}`);
       } else {
         throw new Error('Failed to create deployment');
       }
