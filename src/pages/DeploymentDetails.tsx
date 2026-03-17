@@ -203,7 +203,7 @@ export default function DeploymentDetails() {
             <div className="h-6 w-6 rounded-md bg-amber-400 flex items-center justify-center">
               <Receipt className="h-3 w-3 text-stone-900" />
             </div>
-            <span className="font-bold tracking-tight text-stone-900 font-heading">Claimora</span>
+            <span className="font-bold tracking-tight text-stone-900 font-heading">My-Claimora</span>
           </div>
         </div>
       </nav>
@@ -254,7 +254,7 @@ export default function DeploymentDetails() {
                 </div>
                 <div className="flex justify-between text-sm pt-1">
                   <span className="text-stone-500">Total Spend</span>
-                  <span className="text-2xl font-bold text-stone-900">${totalSpend.toFixed(2)}</span>
+                  <span className="text-2xl font-bold text-stone-900">₹{totalSpend.toFixed(2)}</span>
                 </div>
               </CardContent>
             </Card>
@@ -282,7 +282,7 @@ export default function DeploymentDetails() {
                         ))}
                       </Pie>
                       <Tooltip 
-                        formatter={(value: number) => `$${value.toFixed(2)}`} 
+                        formatter={(value: number) => `₹${value.toFixed(2)}`} 
                         contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                       />
                       <Legend iconType="circle" />
@@ -350,7 +350,7 @@ export default function DeploymentDetails() {
                             </select>
                           </div>
                           <div className="space-y-2">
-                            <Label htmlFor="amount">Amount ($)</Label>
+                            <Label htmlFor="amount">Amount (₹)</Label>
                             <Input
                               id="amount"
                               type="number"
@@ -452,7 +452,7 @@ export default function DeploymentDetails() {
                           </div>
                           <div className="flex items-center gap-4">
                             <div className="text-right font-bold text-stone-900 text-lg">
-                              ${expense.amount.toFixed(2)}
+                              ₹{expense.amount.toFixed(2)}
                             </div>
                             <button
                               onClick={() => handleDeleteExpense(expense.id)}
@@ -513,7 +513,7 @@ export default function DeploymentDetails() {
                           </div>
                         </div>
                         <div className="text-right font-bold text-stone-900 text-lg">
-                          ${expense.amount.toFixed(2)}
+                          ₹{expense.amount.toFixed(2)}
                         </div>
                       </div>
                     ))}

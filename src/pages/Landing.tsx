@@ -32,7 +32,7 @@ export default function Landing() {
             <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-amber-300 to-amber-500 flex items-center justify-center shadow-sm">
               <Receipt className="h-5 w-5 text-stone-900" />
             </div>
-            <span className="text-2xl font-bold tracking-tight text-stone-900 font-heading">Claimora</span>
+            <span className="text-2xl font-bold tracking-tight text-stone-900 font-heading">My-Claimora</span>
           </div>
           <div>
             {user ? (
@@ -100,7 +100,7 @@ export default function Landing() {
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-stone-900 font-heading mb-4">Everything you need, nothing you don't</h2>
-            <p className="text-stone-500 max-w-2xl mx-auto">Claimora is built to eliminate manual Excel logging and fragmented receipt management.</p>
+            <p className="text-stone-500 max-w-2xl mx-auto">My-Claimora is built to eliminate manual Excel logging and fragmented receipt management.</p>
           </div>
           
           <div className="grid md:grid-cols-3 gap-8">
@@ -150,7 +150,7 @@ export default function Landing() {
       <section className="py-24 bg-stone-50">
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-stone-900 font-heading mb-4">How Claimora Works</h2>
+            <h2 className="text-3xl md:text-4xl font-bold text-stone-900 font-heading mb-4">How My-Claimora Works</h2>
             <p className="text-stone-500 max-w-2xl mx-auto">Three simple steps to automate your reimbursement workflow.</p>
           </div>
           
@@ -200,7 +200,7 @@ export default function Landing() {
               ))}
             </div>
             <blockquote className="text-2xl md:text-4xl font-medium leading-tight mb-8 font-heading">
-              "Claimora has completely transformed how our field engineers handle expenses. What used to take hours of manual Excel entry now takes seconds."
+              "My-Claimora has completely transformed how our field engineers handle expenses. What used to take hours of manual Excel entry now takes seconds."
             </blockquote>
             <div className="flex items-center justify-center gap-4">
               <div className="h-12 w-12 rounded-full bg-stone-800 border border-stone-700 overflow-hidden">
@@ -220,7 +220,7 @@ export default function Landing() {
         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10 mix-blend-overlay"></div>
         <div className="max-w-4xl mx-auto px-6 text-center relative z-10">
           <h2 className="text-4xl md:text-5xl font-bold text-stone-900 font-heading mb-6">Ready to streamline your deployments?</h2>
-          <p className="text-xl text-stone-800 mb-10 max-w-2xl mx-auto">Join thousands of professionals who have ditched manual spreadsheets for Claimora.</p>
+          <p className="text-xl text-stone-800 mb-10 max-w-2xl mx-auto">Join thousands of professionals who have ditched manual spreadsheets for My-Claimora.</p>
           <Link to={user ? "/dashboard" : "/login"}>
             <Button size="lg" className="rounded-full bg-stone-900 text-white hover:bg-stone-800 hover:scale-105 transition-all shadow-xl">
               {user ? "Go to Dashboard" : "Get Started Now"}
@@ -236,9 +236,9 @@ export default function Landing() {
           <div className="h-6 w-6 rounded-md bg-amber-400 flex items-center justify-center">
             <Receipt className="h-3 w-3 text-stone-900" />
           </div>
-          <span className="text-lg font-bold tracking-tight text-white font-heading">Claimora</span>
+          <span className="text-lg font-bold tracking-tight text-white font-heading">My-Claimora</span>
         </div>
-        <p className="text-sm">© 2026 Claimora Expense Automation. All rights reserved.</p>
+        <p className="text-sm">© 2026 My-Claimora Expense Automation. All rights reserved.</p>
       </footer>
     </div>
   );

@@ -40,7 +40,7 @@ export const generateExcel = async (deployment: Deployment, expenses: Expense[])
   worksheet.addRow([]);
 
   // Add Headers
-  worksheet.addRow(['Date', 'Category', 'Description', 'Amount']);
+  worksheet.addRow(['Date', 'Category', 'Description', 'Amount (₹)']);
   
   // Style Headers
   const headerRow = worksheet.getRow(7);
@@ -70,7 +70,7 @@ export const generateExcel = async (deployment: Deployment, expenses: Expense[])
     { width: 15 },
     { width: 20 },
     { width: 40 },
-    { width: 15 }
+    { width: 15, numFmt: '₹#,##0.00' }
   ];
 
   const buffer = await workbook.xlsx.writeBuffer();
@@ -103,7 +103,7 @@ export const generatePDF = (deployment: Deployment, expenses: Expense[]) => {
     }
 
     doc.setFontSize(14);
-    doc.text(`Receipt ${index + 1}: ${exp.date} - ${exp.category} - $${exp.amount}`, 14, yOffset);
+    doc.text(`Receipt ${index + 1}: ${exp.date} - ${exp.category} - Rs. ${exp.amount}`, 14, yOffset);
     doc.setFontSize(10);
     doc.text(`Description: ${exp.description}`, 14, yOffset + 6);
 

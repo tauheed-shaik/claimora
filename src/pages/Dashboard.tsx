@@ -91,7 +91,7 @@ export default function Dashboard() {
             <div className="h-8 w-8 rounded-lg bg-amber-400 flex items-center justify-center">
               <Receipt className="h-4 w-4 text-stone-900" />
             </div>
-            <span className="text-xl font-bold tracking-tight text-stone-900 font-heading">Claimora</span>
+            <span className="text-xl font-bold tracking-tight text-stone-900 font-heading">My-Claimora</span>
           </Link>
           <Button variant="ghost" onClick={logout} className="text-stone-500 hover:text-stone-900">
             <LogOut className="mr-2 h-4 w-4" />
