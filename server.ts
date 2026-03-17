@@ -5,7 +5,6 @@ import dotenv from 'dotenv';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import path from 'path';
-import { createServer as createViteServer } from 'vite';
 
 dotenv.config();
 
@@ -204,6 +203,7 @@ app.delete('/api/expenses/:id', authenticateToken, async (req: any, res: any) =>
 // --- Vite Middleware & Static Serving ---
 async function startServer() {
   if (process.env.NODE_ENV !== 'production') {
+    const { createServer: createViteServer } = await import('vite');
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: 'spa',
