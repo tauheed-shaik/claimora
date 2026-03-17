@@ -1,0 +1,111 @@
+{
+  "entities": {
+    "Deployment": {
+      "title": "Deployment",
+      "description": "A professional work deployment or trip.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "The ID of the user who owns this deployment."
+        },
+        "projectName": {
+          "type": "string",
+          "description": "The name of the project or deployment."
+        },
+        "location": {
+          "type": "string",
+          "description": "The location of the deployment."
+        },
+        "startDate": {
+          "type": "string",
+          "format": "date",
+          "description": "The start date of the deployment (YYYY-MM-DD)."
+        },
+        "endDate": {
+          "type": "string",
+          "format": "date",
+          "description": "The end date of the deployment (YYYY-MM-DD)."
+        },
+        "status": {
+          "type": "string",
+          "enum": ["Active", "Closed"],
+          "description": "The status of the deployment."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp when the deployment was created."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp when the deployment was last updated."
+        }
+      },
+      "required": ["userId", "projectName", "location", "startDate", "endDate", "status", "createdAt", "updatedAt"]
+    },
+    "Expense": {
+      "title": "Expense",
+      "description": "An expense entry for a specific deployment.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "The ID of the user who owns this expense."
+        },
+        "deploymentId": {
+          "type": "string",
+          "description": "The ID of the deployment this expense belongs to."
+        },
+        "date": {
+          "type": "string",
+          "format": "date",
+          "description": "The date of the expense (YYYY-MM-DD)."
+        },
+        "category": {
+          "type": "string",
+          "enum": ["Food", "Travel", "Lodging", "Miscellaneous"],
+          "description": "The category of the expense."
+        },
+        "amount": {
+          "type": "number",
+          "description": "The amount of the expense."
+        },
+        "description": {
+          "type": "string",
+          "description": "A description of the expense."
+        },
+        "receiptImage": {
+          "type": "string",
+          "description": "A base64 encoded string of the receipt image. Must be heavily compressed to fit within Firestore limits."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp when the expense was created."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp when the expense was last updated."
+        }
+      },
+      "required": ["userId", "deploymentId", "date", "category", "amount", "description", "createdAt", "updatedAt"]
+    }
+  },
+  "firestore": {
+    "/deployments/{deploymentId}": {
+      "schema": {
+        "$ref": "#/entities/Deployment"
+      },
+      "description": "Stores all deployments."
+    },
+    "/expenses/{expenseId}": {
+      "schema": {
+        "$ref": "#/entities/Expense"
+      },
+      "description": "Stores all expenses."
+    }
+  }
+}

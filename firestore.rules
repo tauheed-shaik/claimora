@@ -1,0 +1,88 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper Functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    function isDocOwner() {
+      return isAuthenticated() && request.auth.uid == resource.data.userId;
+    }
+    
+    function uidUnchanged() {
+      return !('userId' in request.resource.data) || request.resource.data.userId == request.auth.uid;
+    }
+    
+    function uidNotModified() {
+      return !('userId' in request.resource.data) || request.resource.data.userId == resource.data.userId;
+    }
+    
+    function hasRequiredFields(fields) {
+      return request.resource.data.keys().hasAll(fields);
+    }
+    
+    function hasOnlyAllowedFields(fields) {
+      return request.resource.data.keys().hasOnly(fields);
+    }
+    
+    function validStringLength(field, minLen, maxLen) {
+      return request.resource.data[field] is string &&
+        request.resource.data[field].size() >= minLen &&
+        request.resource.data[field].size() <= maxLen;
+    }
+
+    function isValidDateString(dateStr) {
+      return dateStr is string &&
+        dateStr.matches("^\\d{4}-\\d{2}-\\d{2}$");
+    }
+
+    function isValidDateTimeString(dateStr) {
+      return dateStr is string &&
+        dateStr.matches("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.*Z?$");
+    }
+    
+    function isValidDeployment(data) {
+      return hasOnlyAllowedFields(['userId', 'projectName', 'location', 'startDate', 'endDate', 'status', 'createdAt', 'updatedAt']) &&
+             data.userId is string && data.userId.size() > 0 && data.userId.size() < 100 &&
+             data.projectName is string && data.projectName.size() > 0 && data.projectName.size() < 100 &&
+             data.location is string && data.location.size() > 0 && data.location.size() < 100 &&
+             isValidDateString(data.startDate) &&
+             isValidDateString(data.endDate) &&
+             data.status in ['Active', 'Closed'] &&
+             isValidDateTimeString(data.createdAt) &&
+             isValidDateTimeString(data.updatedAt);
+    }
+    
+    function isValidExpense(data) {
+      return hasOnlyAllowedFields(['userId', 'deploymentId', 'date', 'category', 'amount', 'description', 'receiptImage', 'createdAt', 'updatedAt']) &&
+             data.userId is string && data.userId.size() > 0 && data.userId.size() < 100 &&
+             data.deploymentId is string && data.deploymentId.size() > 0 && data.deploymentId.size() < 100 &&
+             isValidDateString(data.date) &&
+             data.category in ['Food', 'Travel', 'Lodging', 'Miscellaneous'] &&
+             data.amount is number && data.amount > 0 &&
+             data.description is string && data.description.size() >= 0 && data.description.size() < 500 &&
+             (!('receiptImage' in data) || (data.receiptImage is string && data.receiptImage.size() < 1000000)) && // Max ~1MB
+             isValidDateTimeString(data.createdAt) &&
+             isValidDateTimeString(data.updatedAt);
+    }
+
+    match /deployments/{deploymentId} {
+      allow read: if isDocOwner();
+      allow create: if isAuthenticated() && isValidDeployment(request.resource.data) && uidUnchanged();
+      allow update: if isDocOwner() && isValidDeployment(request.resource.data) && uidNotModified() && request.resource.data.createdAt == resource.data.createdAt;
+      allow delete: if isDocOwner();
+    }
+    
+    match /expenses/{expenseId} {
+      allow read: if isDocOwner();
+      allow create: if isAuthenticated() && isValidExpense(request.resource.data) && uidUnchanged();
+      allow update: if isDocOwner() && isValidExpense(request.resource.data) && uidNotModified() && request.resource.data.createdAt == resource.data.createdAt;
+      allow delete: if isDocOwner();
+    }
+  }
+}
