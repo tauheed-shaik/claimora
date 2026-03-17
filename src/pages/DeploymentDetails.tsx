@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, Navigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { db } from '../firebase';
-import { doc, getDoc, collection, query, where, onSnapshot, addDoc, updateDoc, deleteDoc, orderBy } from 'firebase/firestore';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
 import { Input } from '../components/ui/input';
@@ -33,32 +31,33 @@ export default function DeploymentDetails() {
     receiptImage: ''
   });
 
-  useEffect(() => {
+  const fetchDeploymentData = async () => {
     if (!user || !id) return;
+    try {
+      const token = localStorage.getItem('token');
+      const headers = { 'Authorization': `Bearer ${token}` };
 
-    const fetchDeployment = async () => {
-      const docRef = doc(db, 'deployments', id);
-      const docSnap = await getDoc(docRef);
-      if (docSnap.exists() && docSnap.data().userId === user.uid) {
-        setDeployment({ id: docSnap.id, ...docSnap.data() } as Deployment);
+      const [deploymentRes, expensesRes] = await Promise.all([
+        fetch(`/api/deployments/${id}`, { headers }),
+        fetch(`/api/expenses/${id}`, { headers })
+      ]);
+
+      if (deploymentRes.ok) {
+        const deploymentData = await deploymentRes.json();
+        setDeployment(deploymentData);
       }
-    };
+      
+      if (expensesRes.ok) {
+        const expensesData = await expensesRes.json();
+        setExpenses(expensesData);
+      }
+    } catch (error) {
+      console.error("Error fetching deployment data:", error);
+    }
+  };
 
-    fetchDeployment();
-
-    const q = query(
-      collection(db, 'expenses'),
-      where('deploymentId', '==', id),
-      where('userId', '==', user.uid),
-      orderBy('date', 'desc')
-    );
-
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Expense));
-      setExpenses(data);
-    });
-
-    return () => unsubscribe();
+  useEffect(() => {
+    fetchDeploymentData();
   }, [id, user]);
 
   if (loading) return null;
@@ -89,25 +88,36 @@ export default function DeploymentDetails() {
     }
 
     try {
-      await addDoc(collection(db, 'expenses'), {
-        userId: user.uid,
-        deploymentId: id,
-        date: newExpense.date,
-        category: newExpense.category,
-        amount: Number(newExpense.amount),
-        description: newExpense.description,
-        receiptImage: newExpense.receiptImage,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+      const token = localStorage.getItem('token');
+      const res = await fetch('/api/expenses', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          deploymentId: id,
+          date: newExpense.date,
+          category: newExpense.category,
+          amount: Number(newExpense.amount),
+          description: newExpense.description,
+          receiptImage: newExpense.receiptImage
+        })
       });
-      setIsAddingExpense(false);
-      setNewExpense({
-        date: new Date().toISOString().split('T')[0],
-        category: 'Food',
-        amount: '',
-        description: '',
-        receiptImage: ''
-      });
+
+      if (res.ok) {
+        await fetchDeploymentData();
+        setIsAddingExpense(false);
+        setNewExpense({
+          date: new Date().toISOString().split('T')[0],
+          category: 'Food',
+          amount: '',
+          description: '',
+          receiptImage: ''
+        });
+      } else {
+        throw new Error('Failed to add expense');
+      }
     } catch (error) {
       console.error("Error adding expense:", error);
       alert("Failed to add expense");
@@ -117,11 +127,21 @@ export default function DeploymentDetails() {
   const handleCloseDeployment = async () => {
     if (!window.confirm("Are you sure you want to close this deployment? You won't be able to add more expenses.")) return;
     try {
-      await updateDoc(doc(db, 'deployments', id!), {
-        status: 'Closed',
-        updatedAt: new Date().toISOString()
+      const token = localStorage.getItem('token');
+      const res = await fetch(`/api/deployments/${id}`, {
+        method: 'PUT',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ status: 'Closed' })
       });
-      setDeployment({ ...deployment, status: 'Closed' });
+
+      if (res.ok) {
+        setDeployment({ ...deployment, status: 'Closed' });
+      } else {
+        throw new Error('Failed to close deployment');
+      }
     } catch (error) {
       console.error("Error closing deployment:", error);
       alert("Failed to close deployment");
@@ -131,7 +151,17 @@ export default function DeploymentDetails() {
   const handleDeleteExpense = async (expenseId: string) => {
     if (!window.confirm("Are you sure you want to delete this expense?")) return;
     try {
-      await deleteDoc(doc(db, 'expenses', expenseId));
+      const token = localStorage.getItem('token');
+      const res = await fetch(`/api/expenses/${expenseId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (res.ok) {
+        await fetchDeploymentData();
+      } else {
+        throw new Error('Failed to delete expense');
+      }
     } catch (error) {
       console.error("Error deleting expense:", error);
       alert("Failed to delete expense");

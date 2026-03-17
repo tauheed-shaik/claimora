@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { db, logout } from '../firebase';
-import { collection, query, where, onSnapshot, addDoc, orderBy } from 'firebase/firestore';
 import { Link, Navigate } from 'react-router-dom';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
@@ -11,7 +9,7 @@ import { LogOut, Plus, Briefcase, MapPin, Calendar, Receipt } from 'lucide-react
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function Dashboard() {
-  const { user, loading } = useAuth();
+  const { user, loading, logout } = useAuth();
   const [deployments, setDeployments] = useState<any[]>([]);
   const [isCreating, setIsCreating] = useState(false);
   const [newDeployment, setNewDeployment] = useState({
@@ -21,23 +19,25 @@ export default function Dashboard() {
     endDate: ''
   });
 
-  useEffect(() => {
-    if (!user) return;
-
-    const q = query(
-      collection(db, 'deployments'),
-      where('userId', '==', user.uid),
-      orderBy('createdAt', 'desc')
-    );
-
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setDeployments(data);
-    }, (error) => {
+  const fetchDeployments = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch('/api/deployments', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setDeployments(data);
+      }
+    } catch (error) {
       console.error("Error fetching deployments:", error);
-    });
+    }
+  };
 
-    return () => unsubscribe();
+  useEffect(() => {
+    if (user) {
+      fetchDeployments();
+    }
   }, [user]);
 
   if (loading) return null;
@@ -46,15 +46,26 @@ export default function Dashboard() {
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await addDoc(collection(db, 'deployments'), {
-        ...newDeployment,
-        userId: user.uid,
-        status: 'Active',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+      const token = localStorage.getItem('token');
+      const res = await fetch('/api/deployments', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          ...newDeployment,
+          status: 'Active'
+        })
       });
-      setIsCreating(false);
-      setNewDeployment({ projectName: '', location: '', startDate: '', endDate: '' });
+      
+      if (res.ok) {
+        await fetchDeployments();
+        setIsCreating(false);
+        setNewDeployment({ projectName: '', location: '', startDate: '', endDate: '' });
+      } else {
+        throw new Error('Failed to create deployment');
+      }
     } catch (error) {
       console.error("Error creating deployment:", error);
       alert("Failed to create deployment");

@@ -1,6 +1,5 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { loginWithGoogle } from '../firebase';
 import { Navigate, Link } from 'react-router-dom';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
@@ -8,10 +7,45 @@ import { motion } from 'framer-motion';
 import { Receipt, ArrowLeft } from 'lucide-react';
 
 export default function Login() {
-  const { user, loading } = useAuth();
+  const { user, loading, login } = useAuth();
+  const [isRegister, setIsRegister] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
+  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   if (loading) return null;
   if (user) return <Navigate to="/dashboard" replace />;
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setIsLoading(true);
+
+    try {
+      const endpoint = isRegister ? '/api/auth/register' : '/api/auth/login';
+      const body = isRegister ? { email, password, name } : { email, password };
+      
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      
+      const data = await res.json();
+      
+      if (!res.ok) {
+        throw new Error(data.error || 'Authentication failed');
+      }
+      
+      login(data.token, data.user);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-stone-50 p-4 relative overflow-hidden">
@@ -37,15 +71,73 @@ export default function Login() {
         
         <Card className="border-stone-200/60 shadow-xl shadow-stone-200/50 bg-white/80 backdrop-blur-xl">
           <CardHeader className="space-y-2 text-center pb-8">
-            <CardTitle className="text-3xl font-bold font-heading">Welcome back</CardTitle>
+            <CardTitle className="text-3xl font-bold font-heading">
+              {isRegister ? 'Create an account' : 'Welcome back'}
+            </CardTitle>
             <CardDescription className="text-base">
-              Sign in to your account to manage deployments and expenses
+              {isRegister ? 'Sign up to manage deployments and expenses' : 'Sign in to your account to manage deployments and expenses'}
             </CardDescription>
           </CardHeader>
-          <CardContent className="flex justify-center pb-8">
-            <Button onClick={loginWithGoogle} className="w-full h-12 text-base" size="lg">
-              Sign in with Google
-            </Button>
+          <CardContent className="pb-8">
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {error && (
+                <div className="p-3 text-sm text-red-500 bg-red-50 rounded-md">
+                  {error}
+                </div>
+              )}
+              
+              {isRegister && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Name</label>
+                  <input 
+                    type="text" 
+                    required 
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="w-full p-3 rounded-md border border-stone-200 bg-white"
+                    placeholder="John Doe"
+                  />
+                </div>
+              )}
+              
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Email</label>
+                <input 
+                  type="email" 
+                  required 
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full p-3 rounded-md border border-stone-200 bg-white"
+                  placeholder="name@example.com"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Password</label>
+                <input 
+                  type="password" 
+                  required 
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full p-3 rounded-md border border-stone-200 bg-white"
+                  placeholder="••••••••"
+                />
+              </div>
+              
+              <Button type="submit" className="w-full h-12 text-base mt-6" size="lg" disabled={isLoading}>
+                {isLoading ? 'Please wait...' : (isRegister ? 'Sign Up' : 'Sign In')}
+              </Button>
+            </form>
+            
+            <div className="mt-6 text-center text-sm text-stone-500">
+              {isRegister ? 'Already have an account?' : "Don't have an account?"}{' '}
+              <button 
+                onClick={() => setIsRegister(!isRegister)} 
+                className="text-stone-900 font-medium hover:underline"
+              >
+                {isRegister ? 'Sign In' : 'Sign Up'}
+              </button>
+            </div>
           </CardContent>
         </Card>
       </motion.div>
