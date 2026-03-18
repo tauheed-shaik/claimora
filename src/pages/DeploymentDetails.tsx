@@ -5,11 +5,12 @@ import { Button } from '../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
-import { ArrowLeft, Upload, FileSpreadsheet, FileText, CheckCircle2, Plus, Image as ImageIcon, Trash2, Receipt } from 'lucide-react';
+import { ArrowLeft, Upload, FileSpreadsheet, FileText, CheckCircle2, Plus, Image as ImageIcon, Trash2, Receipt, Camera } from 'lucide-react';
 import { resizeImage } from '../services/imageService';
 import { generateExcel, generatePDF, Expense, Deployment } from '../services/exportService';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 import { motion, AnimatePresence } from 'framer-motion';
+import Webcam from 'react-webcam';
 
 const CATEGORIES = ['Food', 'Travel', 'Lodging', 'Miscellaneous'];
 const COLORS = ['#F59E0B', '#10B981', '#3B82F6', '#6366F1'];
@@ -21,7 +22,9 @@ export default function DeploymentDetails() {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [isAddingExpense, setIsAddingExpense] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const webcamRef = React.useRef<Webcam>(null);
   
   const [newExpense, setNewExpense] = useState({
     date: new Date().toISOString().split('T')[0],
@@ -77,6 +80,14 @@ export default function DeploymentDetails() {
       alert("Failed to process image. Please try a different one.");
     } finally {
       setUploadingImage(false);
+    }
+  };
+
+  const capturePhoto = () => {
+    const imageSrc = webcamRef.current?.getScreenshot();
+    if (imageSrc) {
+      setNewExpense({ ...newExpense, receiptImage: imageSrc });
+      setIsCameraOpen(false);
     }
   };
 
@@ -209,6 +220,24 @@ export default function DeploymentDetails() {
       </nav>
 
       <main className="mx-auto max-w-7xl p-4 md:p-8 pt-8">
+        {isCameraOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
+            <div className="relative w-full max-w-md overflow-hidden rounded-2xl bg-stone-900">
+              <Webcam
+                audio={false}
+                ref={webcamRef}
+                screenshotFormat="image/jpeg"
+                videoConstraints={{ facingMode: "environment" }}
+                className="w-full h-auto"
+              />
+              <div className="absolute bottom-0 left-0 right-0 p-4 flex justify-center gap-4 bg-gradient-to-t from-black/80 to-transparent">
+                <Button type="button" variant="outline" className="bg-white text-black hover:bg-stone-200" onClick={() => setIsCameraOpen(false)}>Cancel</Button>
+                <Button type="button" className="bg-amber-500 hover:bg-amber-600 text-white" onClick={capturePhoto}>Capture</Button>
+              </div>
+            </div>
+          </div>
+        )}
+
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-stone-900 font-heading mb-2">{deployment.projectName}</h1>
@@ -376,27 +405,42 @@ export default function DeploymentDetails() {
                           </div>
                           <div className="col-span-full space-y-2">
                             <Label>Receipt Image</Label>
-                            <div className="flex items-center gap-4">
-                              <label className="flex cursor-pointer items-center justify-center rounded-xl border border-dashed border-stone-300 bg-white px-4 py-8 hover:bg-stone-50 hover:border-amber-300 w-full transition-colors">
-                                <div className="flex flex-col items-center gap-3 text-stone-500">
-                                  <div className="p-3 bg-amber-100 rounded-full text-amber-600">
-                                    <Upload className="h-5 w-5" />
+                            <div className="flex flex-col gap-4">
+                              <div className="flex gap-4 w-full">
+                                <button
+                                  type="button"
+                                  onClick={() => setIsCameraOpen(true)}
+                                  className="flex flex-1 cursor-pointer items-center justify-center rounded-xl border border-dashed border-stone-300 bg-white px-4 py-8 hover:bg-stone-50 hover:border-amber-300 transition-colors"
+                                >
+                                  <div className="flex flex-col items-center gap-3 text-stone-500">
+                                    <div className="p-3 bg-amber-100 rounded-full text-amber-600">
+                                      <Camera className="h-5 w-5" />
+                                    </div>
+                                    <span className="text-sm font-medium text-center">
+                                      Take Photo
+                                    </span>
                                   </div>
-                                  <span className="text-sm font-medium">
-                                    {uploadingImage ? 'Processing...' : 'Click to upload receipt photo'}
-                                  </span>
-                                </div>
-                                <input
-                                  type="file"
-                                  accept="image/*"
-                                  capture="environment"
-                                  className="hidden"
-                                  onChange={handleImageUpload}
-                                  disabled={uploadingImage}
-                                />
-                              </label>
+                                </button>
+                                <label className="flex flex-1 cursor-pointer items-center justify-center rounded-xl border border-dashed border-stone-300 bg-white px-4 py-8 hover:bg-stone-50 hover:border-amber-300 transition-colors">
+                                  <div className="flex flex-col items-center gap-3 text-stone-500">
+                                    <div className="p-3 bg-amber-100 rounded-full text-amber-600">
+                                      <Upload className="h-5 w-5" />
+                                    </div>
+                                    <span className="text-sm font-medium text-center">
+                                      {uploadingImage ? 'Processing...' : 'Upload File'}
+                                    </span>
+                                  </div>
+                                  <input
+                                    type="file"
+                                    accept="image/*"
+                                    className="hidden"
+                                    onChange={handleImageUpload}
+                                    disabled={uploadingImage}
+                                  />
+                                </label>
+                              </div>
                               {newExpense.receiptImage && (
-                                <div className="relative h-32 w-32 flex-shrink-0 overflow-hidden rounded-xl border border-stone-200 shadow-sm">
+                                <div className="relative h-32 w-32 flex-shrink-0 overflow-hidden rounded-xl border border-stone-200 shadow-sm mx-auto">
                                   <img src={newExpense.receiptImage} alt="Receipt preview" className="h-full w-full object-cover" />
                                   <button
                                     type="button"
